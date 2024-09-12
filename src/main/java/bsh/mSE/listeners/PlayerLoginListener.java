@@ -12,6 +12,11 @@ public class PlayerLoginListener implements Listener {
 
     @EventHandler
     public void addStopwatchBar(PlayerLoginEvent event){
-        stopwatchManager.addPlayer(event.getPlayer());
+        try{
+            stopwatchManager.addPlayer(event.getPlayer());
+        }
+        catch (IllegalStateException e){
+            // TODO: when the user joins sometimes this error fires
+        }
     }
 }

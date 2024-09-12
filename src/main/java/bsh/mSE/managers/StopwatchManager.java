@@ -1,25 +1,38 @@
 package bsh.mSE.managers;
 
+import bsh.mSE.utils.OraxenUtils;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarStyle;
-import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.*;
 import bsh.mSE.MSE;
 
 public class StopwatchManager {
 
-    private BossBar bossBar;
+    private Scoreboard scoreboard;
+    private Objective objective;
     private BukkitRunnable task;
-    private int elapsedMinutes; // Now tracking minutes
+    private int elapsedMinutes; // Tracking minutes
     private boolean isRunning;
+    private String lastTimeDisplayed;
 
     public StopwatchManager() {
-        // Initialize the boss bar
-        bossBar = Bukkit.createBossBar("Stopwatch: 0 hours 0 minutes", BarColor.YELLOW, BarStyle.SOLID);
+        // Initialize the scoreboard and objective
+        initializeScoreboard();
         elapsedMinutes = 0;
         isRunning = false;
+        lastTimeDisplayed = "";
+    }
+
+    private void initializeScoreboard() {
+        // Create a new scoreboard
+        ScoreboardManager manager = Bukkit.getScoreboardManager();
+        scoreboard = manager.getNewScoreboard();
+
+        // Create a new objective in the scoreboard
+        objective = scoreboard.registerNewObjective("stopwatch", Criteria.DUMMY, Component.text(OraxenUtils.getGlyph("half_brain").getCharacter()));
+        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
     }
 
     // Start the stopwatch
@@ -28,12 +41,12 @@ public class StopwatchManager {
 
         isRunning = true;
 
-        // Schedule a repeating task to update the boss bar every minute
+        // Schedule a repeating task to update the scoreboard every minute
         task = new BukkitRunnable() {
             @Override
             public void run() {
                 elapsedMinutes++;
-                updateBossBar();
+                updateScoreboard();
             }
         };
         task.runTaskTimer(MSE.getInstance(), 0L, 1200L); // 1200 ticks = 1 minute (20 ticks per second * 60 seconds)
@@ -54,32 +67,34 @@ public class StopwatchManager {
             task.cancel();
         }
         elapsedMinutes = 0;
-        updateBossBar();
+        updateScoreboard();
         isRunning = false;
         this.removeAllPlayers();
     }
 
-    private void updateBossBar() {
+    private void updateScoreboard() {
         int hours = elapsedMinutes / 60;
         int minutes = elapsedMinutes % 60;
 
-        // Format the time based on the number of hours
-        String formattedTime;
-        if (hours > 0) {
-            formattedTime = String.format("%d hours %d minutes", hours, minutes - 1);
-        } else {
-            formattedTime = String.format("%d minutes", minutes - 1);
+        // Format the time as 0h30m or 0h00m
+        String formattedTime = String.format("%02dh%02dm", hours, minutes);
+
+        // Remove the previous score
+        if (!lastTimeDisplayed.isEmpty()) {
+            scoreboard.resetScores(lastTimeDisplayed);
         }
 
-        bossBar.setTitle(formattedTime);
+        // Update the scoreboard with the new time
+        Score score = objective.getScore(formattedTime);
+        score.setScore(1); // Set a constant score of 1 for display purposes
 
-        // Optionally update progress bar (e.g., every 12 hours, reset visual bar)
-        bossBar.setProgress(Math.min(1.0, (elapsedMinutes % (12 * 60)) / (12.0 * 60))); // 12-hour cycle for progress
+        // Store the last displayed time to remove it in the next update
+        lastTimeDisplayed = formattedTime;
     }
 
-    // Add a player to see the boss bar
+    // Add a player to see the scoreboard
     public void addPlayer(Player player) {
-        bossBar.addPlayer(player);
+        player.setScoreboard(scoreboard);
     }
 
     public void addAllPlayers(){
@@ -90,12 +105,7 @@ public class StopwatchManager {
 
     public void removeAllPlayers(){
         for(Player player: Bukkit.getOnlinePlayers()){
-            this.removePlayer(player);
+            player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard()); // Reset to the main scoreboard
         }
-    }
-
-    // Remove a player from the boss bar
-    public void removePlayer(Player player) {
-        bossBar.removePlayer(player);
     }
 }

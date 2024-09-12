@@ -1,11 +1,14 @@
 package bsh.mSE.commands;
 
 import bsh.mSE.MSE;
+import bsh.mSE.managers.PermissionsManager;
 import bsh.mSE.managers.PlayerMessages;
 import bsh.mSE.utils.TeamAssignUtils;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -44,7 +47,20 @@ public class Commands {
         // Freeze the game
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), isPlayersFrozen ? "tick unfreeze" : "tick freeze");
         MSE.togglePlayersFrozen();
-        PlayerMessages.sendCommandFeedback(isPlayersFrozen ? "You have UNFROZEN all players." : "You have FROZEN all players.", sender);
+        if(isPlayersFrozen){
+            PlayerMessages.sendCommandFeedback("You have UNFROZEN all players.", sender);
+            for(Player player : Bukkit.getOnlinePlayers()){
+                if(!PermissionsManager.isPlayerStaff(player)){
+                    PlayerMessages.sendTitle("", "You have been unfrozen.", NamedTextColor.GREEN, player);
+                }
+                else{
+                    PlayerMessages.sendCommandFeedback(sender.getName() + " has unfrozen the world.", player);
+                }
+            }
+        }
+        else{
+            PlayerMessages.sendCommandFeedback("You have FROZEN all players.", sender);
+        }
     }
 
     public static boolean assignPlayer(@NotNull CommandSender sender, @NotNull OfflinePlayer player, String teamName, String luckPermsGroupName) {

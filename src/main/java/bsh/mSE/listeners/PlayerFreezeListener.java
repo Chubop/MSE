@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import bsh.mSE.MSE; // Assuming this is where the isPlayersFrozen flag is located.
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.potion.PotionEffectType;
 
 public class PlayerFreezeListener implements Listener {
 
@@ -21,7 +22,8 @@ public class PlayerFreezeListener implements Listener {
         // Check if players are frozen and the player is not staff (camera or admin)
         if (isPlayersFrozen && !PermissionsManager.isPlayerStaff(player)) {
             // Send a message to the player (using action bar or title, as needed)
-            PlayerMessages.sendNegativeMessage("All players have been frozen by an event administrator.", player);
+            PlayerMessages.sendTitle("", "The world has been frozen by an administrator.",
+                    NamedTextColor.WHITE, player);
             // Cancel the event, which prevents the player from moving
             event.setCancelled(true);
         }
@@ -34,8 +36,6 @@ public class PlayerFreezeListener implements Listener {
         boolean isPlayersFrozen = MSE.getIsPlayersFrozen();
         // Check if players are frozen and the player is not staff (camera or admin)
         if (isPlayersFrozen && !PermissionsManager.isPlayerStaff(player)) {
-            // Send a message to the player (using action bar or title, as needed)
-            PlayerMessages.sendNegativeMessage("All players have been frozen by an event administrator.", player);
             // Cancel the event, which prevents the player from moving
             event.setCancelled(true);
         }

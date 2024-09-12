@@ -1,9 +1,10 @@
 package bsh.mSE.commands;
 
 import bsh.mSE.MSE;
-import bsh.mSE.managers.PermissionsManager;
 import bsh.mSE.managers.PlayerMessages;
 import bsh.mSE.managers.StopwatchManager;
+import bsh.mSE.utils.TeamAssignUtils;
+
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -43,7 +44,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 Commands.handleGraceCommand(sender, args);
                 break;
 
-            case "freeze-all":
+            case "freeze":
                 Commands.handleFreezePlayersCommand(sender);
                 break;
 
@@ -104,11 +105,47 @@ public class CommandManager implements CommandExecutor, TabCompleter {
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
-        if(!sender.isOp()) new ArrayList<>();
+        if (!sender.isOp()) return new ArrayList<>();
+    
         if (args.length == 1) {
-            List<String> subcommands = Arrays.asList("assign-teams", "grace", "freeze-all", "mass-whitelist", "pause-clock", "start-clock", "stop-clock");
+            List<String> subcommands = Arrays.asList("assign-teams", "grace", "freeze", "mass-whitelist", "pause-clock", "start-clock", "stop-clock", "assign");
             return filterTabSuggestions(subcommands, args[0]);
         }
+    
+        if (args.length > 1) {
+            String subcommand = args[0].toLowerCase();
+            switch (subcommand) {
+                case "assign":
+                    if (args.length == 2) {
+                        return null; // Suggest player names
+                    } else if (args.length == 3) {
+                        return TeamAssignUtils.getAllTeamNames(); // Example team names
+                    } else if (args.length == 4) {
+                        return TeamAssignUtils.getAllLuckPermsGroupNames(); // Example LuckPerms group names
+                    }
+                    break;
+    
+                case "assign-teams":
+                    if (args.length == 2) {
+                        return TeamAssignUtils.getAllTeamNames(); // Example team names
+                    } else if (args.length == 3) {
+                        return TeamAssignUtils.getAllLuckPermsGroupNames(); // Example LuckPerms group names
+                    } else if (args.length == 4) {
+                        return null; // Suggest file names
+                    }
+                    break;
+    
+                case "mass-whitelist":
+                    if (args.length == 2) {
+                        return null; // Suggest file names
+                    }
+                    break;
+    
+                default:
+                    return new ArrayList<>();
+            }
+        }
+    
         return new ArrayList<>();
     }
 
@@ -121,4 +158,5 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         }
         return completions;
     }
+
 }

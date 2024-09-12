@@ -6,6 +6,7 @@ import net.luckperms.api.node.Node;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
 import java.io.BufferedReader;
@@ -115,8 +116,25 @@ public class TeamAssignUtils {
             result.complete(false);
             return null;
         });
-
         return result;
+    }
+
+    public static List<String> getAllTeamNames() {
+        Scoreboard scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
+        List<String> teamNames = new ArrayList<>();
+        for (Team team : scoreboard.getTeams()) {
+            teamNames.add(team.getName());
+        }
+        return teamNames;
+    }
+
+    public static List<String> getAllLuckPermsGroupNames() {
+        if (luckPerms == null) {
+            initializeLuckPerms();
+        }
+        List<String> groupNames = new ArrayList<>();
+        luckPerms.getGroupManager().getLoadedGroups().forEach(group -> groupNames.add(group.getName()));
+        return groupNames;
     }
 
     private static void saveLuckPermsUser(OfflinePlayer player, User user, String groupName, CompletableFuture<Boolean> result) {

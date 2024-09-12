@@ -7,6 +7,8 @@ import bsh.mSE.utils.GameRuleUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
+
 public final class MSE extends JavaPlugin {
 
     public static String eventName = "beyond";
@@ -51,9 +53,19 @@ public final class MSE extends JavaPlugin {
         return JavaPlugin.getPlugin(MSE.class);
     }
 
+    private void initFolder(){
+        File pluginFolder = new File(this.getDataFolder(), "MSE");
+        if (!pluginFolder.exists()) {
+            pluginFolder.mkdirs();
+        }
+    }
+
     @Override
     public void onEnable() {
+        initFolder();
+
         new CommandManager(this);
+        stopwatchManager = new StopwatchManager();
 
         // BEYOND listeners.
         getServer().getPluginManager().registerEvents(new CraftingDisableListener(), this);
@@ -72,12 +84,11 @@ public final class MSE extends JavaPlugin {
             GameRuleUtils.setBeyondEventRules();
         }
         Bukkit.getLogger().info("All game rules loaded.");
-        stopwatchManager = new StopwatchManager();
-
     }
 
     @Override
     public void onDisable() {
+        // Unfreeze the world in case a crash happens when the world is frozen.
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tick unfreeze");
     }
 }
