@@ -4,26 +4,98 @@ import bsh.mSE.MSE;
 import bsh.mSE.managers.PermissionsManager;
 import bsh.mSE.managers.PlayerMessages;
 import bsh.mSE.utils.TeamAssignUtils;
+import net.citizensnpcs.api.CitizensAPI;
+import net.citizensnpcs.api.npc.NPC;
+import net.citizensnpcs.api.npc.NPCRegistry;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.EntityEquipment;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 
 public class Commands {
 
+    private static final Map<String, Location> playerLocations = new HashMap<>();
+    private static final Map<String, NPC> playerNPCs = new HashMap<>();
+
+    public static void handleSilentTeleport(CommandSender sender, String[] args){
+        Player targetPlayer = getTargetPlayer(sender, args);
+        assert targetPlayer != null;
+        if(!(sender instanceof Player)) return;
+        Location location = targetPlayer.getLocation();
+        Player player = (Player) sender;
+        player.setGameMode(GameMode.SPECTATOR);
+        player.teleport(location);
+        PlayerMessages.sendCommandFeedback("You have been silently teleported to " + targetPlayer.getName() + ".", sender);
+    }
+
+    public static void handleCloneTpCommand(@NotNull CommandSender sender, @NotNull String playerName) {
+        Player player = Bukkit.getPlayer(playerName);
+        if (player == null) {
+            PlayerMessages.sendCommandFeedback("Player not found.", sender);
+            return;
+        }
+
+        if (!(sender instanceof Player commandSender)) {
+            PlayerMessages.sendCommandFeedback("This command can only be executed by a player.", sender);
+            return;
+        }
+
+        if (playerNPCs.containsKey(playerName)) {
+            // Teleport player back to original location and remove NPC
+            player.teleport(playerLocations.get(playerName));
+            playerNPCs.get(playerName).destroy();
+            playerNPCs.remove(playerName);
+            playerLocations.remove(playerName);
+            PlayerMessages.sendCommandFeedback("Player teleported back and NPC removed.", sender);
+        } else {
+            // Save current location
+            playerLocations.put(playerName, player.getLocation());
+
+            // Create NPC
+            NPCRegistry registry = CitizensAPI.getNPCRegistry();
+            NPC npc = registry.createNPC(EntityType.PLAYER, player.getName());
+            npc.spawn(player.getLocation());
+            npc.getEntity().customName(Component.text(player.getName()));
+            npc.getEntity().setPose(player.getPose());
+            npc.getEntity().setCustomNameVisible(true);
+
+            // Set NPC equipment
+            if (npc.getEntity() instanceof Player npcPlayer) {
+                EntityEquipment equipment = player.getEquipment();
+                npcPlayer.getEquipment().setArmorContents(equipment.getArmorContents());
+                npcPlayer.getEquipment().setItemInMainHand(equipment.getItemInMainHand());
+                npcPlayer.getEquipment().setItemInOffHand(equipment.getItemInOffHand());
+            }
+
+            // Save NPC
+            playerNPCs.put(playerName, npc);
+
+            // Teleport player to command sender
+            player.teleport(commandSender.getLocation());
+            PlayerMessages.sendCommandFeedback("Player teleported and NPC created.", sender);
+        }
+    }
+
     public static void handleGraceCommand(@NotNull CommandSender sender, @NotNull String[] args) {
-        if (args.length == 2) {
-            boolean gracePeriodStatus = MSE.getIsGracePeriod();
-            PlayerMessages.sendCommandFeedback("Grace period is " + (gracePeriodStatus ? "on" : "off"), sender);
-        } else if (args.length == 3) {
-            String action = args[2].toLowerCase();
+        if (args.length <= 1) {
+            boolean gracePeriodStatus = MSE.isGracePeriod();
+            PlayerMessages.sendCommandFeedback("Grace period is currently " + (gracePeriodStatus ? "ON" : "OFF"), sender);
+        } else if (args.length == 2) {
+            String action = args[1].toLowerCase();
             switch (action) {
                 case "on":
                     MSE.turnOnGracePeriod();
@@ -119,7 +191,6 @@ public class Commands {
         e.printStackTrace();
     }
 
-
     public static void assignTeamsAndGroups(CommandSender sender, String teamName, String luckPermsGroupName, String fileName) {
         File pluginDirectory = Objects.requireNonNull(Bukkit.getPluginManager().getPlugin("MSE")).getDataFolder();
         File file = new File(pluginDirectory, fileName);
@@ -205,6 +276,24 @@ public class Commands {
     private static void logError(String message, Exception e) {
         Bukkit.getLogger().severe(message + ": " + e.getMessage());
         e.printStackTrace();
+    }
+
+    private static Player getTargetPlayer(CommandSender sender, String[] args){
+        Player targetPlayer;
+
+        if (args.length >= 2) {
+            targetPlayer = Bukkit.getPlayer(args[1]);
+            if (targetPlayer == null) {
+                PlayerMessages.sendCommandFeedback("Player not found.", sender);
+                return null;
+            }
+        } else if (sender instanceof Player) {
+            targetPlayer = (Player) sender;
+        } else {
+            sender.sendMessage("This command can only be used by players.");
+            return null;
+        }
+        return targetPlayer;
     }
 
 }

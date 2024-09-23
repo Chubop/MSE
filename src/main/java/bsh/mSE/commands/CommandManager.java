@@ -2,7 +2,6 @@ package bsh.mSE.commands;
 
 import bsh.mSE.MSE;
 import bsh.mSE.managers.PlayerMessages;
-import bsh.mSE.managers.StopwatchManager;
 import bsh.mSE.utils.TeamAssignUtils;
 
 import org.bukkit.Bukkit;
@@ -36,10 +35,12 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         if(!sender.isOp()) return true;
 
         String subcommand = args[0].toLowerCase();
-        StopwatchManager stopwatchManager = MSE.getInstance().getStopwatchManager();
-
 
         switch (subcommand) {
+            case "stp":
+                Commands.handleSilentTeleport(sender, args);
+                break;
+
             case "grace":
                 Commands.handleGraceCommand(sender, args);
                 break;
@@ -81,19 +82,13 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 }
                 break;
 
-            case "start-clock":
-                stopwatchManager.startClock();
-                PlayerMessages.sendCommandFeedback("Event stopwatch started.", sender);
-                break;
-
-            case "pause-clock":
-                stopwatchManager.pauseClock();
-                PlayerMessages.sendCommandFeedback("Event stopwatch paused.", sender);
-                break;
-
-            case "stop-clock":
-                stopwatchManager.stopClock();
-                PlayerMessages.sendCommandFeedback("Event stopwatch stopped and reset.", sender);
+            case "clone-tp":
+                if (args.length == 2) {
+                    String playerName = args[1];
+                    Commands.handleCloneTpCommand(sender, playerName);
+                } else {
+                    PlayerMessages.sendCommandFeedback("Usage: /event clonetp [playerName]", sender);
+                }
                 break;
 
             default:
@@ -108,7 +103,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         if (!sender.isOp()) return new ArrayList<>();
     
         if (args.length == 1) {
-            List<String> subcommands = Arrays.asList("assign-teams", "grace", "freeze", "mass-whitelist", "pause-clock", "start-clock", "stop-clock", "assign");
+            List<String> subcommands = Arrays.asList("assign", "assign-teams", "clone-tp", "grace", "freeze", "mass-whitelist", "pause-clock", "start-clock", "stop-clock", "stp");
             return filterTabSuggestions(subcommands, args[0]);
         }
     

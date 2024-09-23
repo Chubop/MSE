@@ -14,7 +14,6 @@ public class GameRuleUtils {
             world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
             world.setGameRule(GameRule.KEEP_INVENTORY, false);
             world.setGameRule(GameRule.DO_MOB_SPAWNING, true);
-            world.setGameRule(GameRule.MOB_GRIEFING, false);
             world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
             world.setGameRule(GameRule.DISABLE_RAIDS, false);
             world.setGameRule(GameRule.DO_INSOMNIA, false);

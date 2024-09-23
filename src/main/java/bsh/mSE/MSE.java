@@ -2,7 +2,7 @@ package bsh.mSE;
 
 import bsh.mSE.commands.CommandManager;
 import bsh.mSE.listeners.*;
-import bsh.mSE.managers.StopwatchManager;
+import bsh.mSE.managers.LogoutTimerManager;
 import bsh.mSE.utils.GameRuleUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -14,13 +14,13 @@ public final class MSE extends JavaPlugin {
     public static String eventName = "beyond";
     private static boolean isPlayersFrozen = false;
     private static boolean isGracePeriod = true;
-    private StopwatchManager stopwatchManager;
+    private static LogoutTimerManager ltm;
 
-    public StopwatchManager getStopwatchManager(){
-        return stopwatchManager;
+    public static LogoutTimerManager getLogoutTimerManager(){
+        return ltm;
     }
 
-    public static boolean getIsGracePeriod(){
+    public static boolean isGracePeriod(){
         return isGracePeriod;
     }
 
@@ -65,18 +65,19 @@ public final class MSE extends JavaPlugin {
         initFolder();
 
         new CommandManager(this);
-        stopwatchManager = new StopwatchManager();
+        ltm = new LogoutTimerManager();
 
         // BEYOND listeners.
         getServer().getPluginManager().registerEvents(new CraftingDisableListener(), this);
         getServer().getPluginManager().registerEvents(new CropGrowthDisableListener(), this);
         getServer().getPluginManager().registerEvents(new FishingDisableListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerDeathBanListener(), this);
-        getServer().getPluginManager().registerEvents(new PlayerDeathMessageListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerFreezeListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerLightningDeathListener(), this);
-        getServer().getPluginManager().registerEvents(new PlayerDeathMessageListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerLoginListener(), this);
+        getServer().getPluginManager().registerEvents(new PlayerPvPListener(), this);
+        getServer().getPluginManager().registerEvents(new CancelAchievementsListener(), this);
+
 
         // Setting all game rules
         GameRuleUtils.setGenericEventRules();
